@@ -2,21 +2,20 @@
 // 매 실행 시 DB 조회 발생
 import { prisma } from '../../index.js';
 
-export default async function (req, res) {
+export default async function (req, res, next) {
     try {
         const { character_id_auth } = req.params;
         const { userId } = req.user;
-
-        console.log(req.params);
 
         const findCharacter = await prisma.character.findFirst({
             where: { characterId: parseInt(character_id_auth) },
         });
 
-        if (findCharacter.userId !== userId) {
-            return res.status(400).json({ message: ' 계정 내의 캐릭터가 아닙니다. ' });
+        if (findCharacter === null || findCharacter.userId !== userId) {
+            throw new Error(' 계정 내 캐릭터가 아닙니다. ');
         }
         req.character = findCharacter;
+        next();
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }

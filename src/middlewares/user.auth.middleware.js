@@ -2,7 +2,7 @@ import jwt from 'jsonwebtoken';
 import { prisma } from '../../index.js';
 
 export default async function (req, res, next) {
-    const { authorization } = req.cookies;
+    const authorization = req.headers['authorization'];
 
     try {
         // 로그인 안했을 때
@@ -30,20 +30,7 @@ export default async function (req, res, next) {
 
         if (!user) {
             throw new Error('사용자 정보가 존재하지 않습니다.');
-        }
-
-        // 캐릭터 검증이 필요한 params 일 때
-        const { character_id_auth } = req.params;
-        console.log(req.params);
-        if (character_id_auth) {
-            const findCharacter = await prisma.character.findFirst({
-                where: { characterId: parseInt(character_id_auth) },
-            });
-
-            if (findCharacter.userId !== userId) {
-                return res.status(400).json({ message: ' 계정 내의 캐릭터가 아닙니다. ' });
-            }
-            req.character = findCharacter;
+            //  return res.status(400).json({ message: ' 사용자 정보가 존재하지 않습니다. '});
         }
 
         req.user = user;

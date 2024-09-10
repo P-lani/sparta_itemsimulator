@@ -56,7 +56,7 @@ model Items {
   @@map("items")
 }
 
-// 아이템 기본 DB
+// 아이템 기본 DB 는 안만듦
 // 아이템의 '원본'이 저장된 데이터베이스
 // 실제 유저들이 사용하는 item과 분리되어야함
 // 을 만들어야 하는게 맞는지 생각중
@@ -87,7 +87,7 @@ model Inventory {
   equippedItem    Boolean @default(false) @map("equipped_item")
 
   characterId Int       @map("Character_id")
-  charInven   Character @relation(fields: [characterId], references: [characterId])
+  charInven   Character @relation(fields: [characterId], references: [characterId], onDelete: Cascade)
 
   itemId   Int    @map("item_id")
   itemType Int    @map("item_type")

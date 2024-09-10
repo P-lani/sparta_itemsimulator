@@ -3,7 +3,7 @@ import { prisma } from '../index.js';
 //로그인 검증한것 가져오기
 import authMiddleware from './middlewares/user.auth.middleware.js';
 import loginAuth from './middlewares/user.auth.middleware.js';
-
+import CharacterAuth from './middlewares/character.check.middleware.js';
 const router = express.Router();
 
 // 아이템 생성 API
@@ -79,8 +79,8 @@ router.get('/item/search/:item_id', async (req, res, next) => {
     return res.status(200).json({ data: itemLook });
 });
 
-// 아이템 획득
-router.post('/item/get/:character_id_auth', loginAuth, async (req, res, next) => {
+// 아이템 획득....이 아니라 구매
+router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
     const { character_id_auth } = req.params;
     const { itemId } = req.body;
 
@@ -88,6 +88,9 @@ router.post('/item/get/:character_id_auth', loginAuth, async (req, res, next) =>
         where: { itemId: parseInt(itemId) },
     });
 
+    if (!findItem) {
+        return res.status(400).json({ message: ' 잘못된 아이템 정보 입니다. ' });
+    }
     const inventorySlot = await prisma.inventory.findFirst({
         where: {
             characterId: parseInt(character_id_auth),
@@ -97,6 +100,21 @@ router.post('/item/get/:character_id_auth', loginAuth, async (req, res, next) =>
         },
     });
 
+    // 돈 없을 때
+    if (req.character.characterMoney < findItem.itemPrice) {
+        return res.status(201).json({ message: ` 골드가 부족합니다. 소지금 : ${req.character.characterMoney} ` });
+    }
+    // 돈 계산 (선불)
+    await prisma.character.update({
+        data: {
+            characterMoney: req.character.characterMoney - findItem.itemPrice,
+        },
+        where: {
+            characterId: parseInt(character_id_auth),
+        },
+    });
+
+    // 아이템 생성
     await prisma.inventory.create({
         data: {
             itemId: findItem.itemId,
@@ -105,7 +123,11 @@ router.post('/item/get/:character_id_auth', loginAuth, async (req, res, next) =>
             itemType: findItem.itemType,
         },
     });
-    return res.status(201).json({ message: ` ${findItem.itemName}을 획득했습니다. ` });
+
+    return res.status(201).json({ message: ` ${findItem.itemName}을 구매했습니다. ` });
 });
+
+// 아이템 판매
+router.delete('/item/sell/:character_id_auth', loginAuth, CharacterAuth);
 
 export default router;
