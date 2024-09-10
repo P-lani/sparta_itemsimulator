@@ -1,5 +1,4 @@
 // 캐릭터 검증만 하는 middleware 입니다.
-// 매 실행 시 DB 조회 발생
 import { prisma } from '../../index.js';
 
 export default async function (req, res, next) {
