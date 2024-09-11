@@ -1,5 +1,4 @@
 import express from 'express';
-//쿠키 파서...
 import cookieParser from 'cookie-parser';
 import UsersRouter from './users.router.js';
 import CharacterRouter from './character.router.js';

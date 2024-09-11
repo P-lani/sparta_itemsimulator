@@ -9,7 +9,7 @@ export default async function (req, res, next) {
         if (!authorization) {
             throw new Error('로그인 정보가 존재하지 않습니다.');
         }
-
+        console.log(authorization);
         //Bearer 와 토큰 구분
         const [tokenType, token] = authorization.split(' ');
 
@@ -20,7 +20,7 @@ export default async function (req, res, next) {
         //jwt 복호화
         const decodedToken = jwt.verify(token, process.env.SECRET_KEY);
 
-        //검증 후 uesrId, characterId 추출
+        //uesrId, characterId 추출
         const userId = decodedToken.userId;
 
         // 유저 Id 찾아오기
@@ -30,7 +30,6 @@ export default async function (req, res, next) {
 
         if (!user) {
             throw new Error('사용자 정보가 존재하지 않습니다.');
-            //  return res.status(400).json({ message: ' 사용자 정보가 존재하지 않습니다. '});
         }
 
         req.user = user;

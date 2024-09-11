@@ -32,6 +32,7 @@ model Users {
 
 // 아이템
 // [itemType]
+// 9. 기타
 // 10. 무기
 // 11. 보조무기
 // 12. 갑옷
@@ -48,7 +49,7 @@ model Items {
   itemPrice  Int     @default(0) @map("item_price")
   itemAttack Int     @default(0) @map("item_attack")
   itemHealth Int     @default(0) @map("item_health")
-  itemInfo   String? @map("item_info")
+  itemInfo   String? @default("생성된_아이템") @map("item_info")
   itemType   Int     @map("item_type")
 
   inventory Inventory[]
