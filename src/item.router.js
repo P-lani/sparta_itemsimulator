@@ -79,7 +79,8 @@ router.get('/item/search/:item_id', async (req, res, next) => {
     return res.status(200).json({ data: itemLook });
 });
 
-// 아이템 획득....이 아니라 구매
+// 아이템 획득에서 변경된
+// 아이템 구매
 router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
     const { character_id_auth } = req.params;
     const { itemId } = req.body;
@@ -91,7 +92,8 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
     if (!findItem) {
         return res.status(400).json({ message: ' 잘못된 아이템 정보 입니다. ' });
     }
-    const inventorySlot = await prisma.inventory.findFirst({
+
+    const findTargetItem = await prisma.inventory.findFirst({
         where: {
             characterId: parseInt(character_id_auth),
         },
@@ -104,7 +106,7 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
     if (req.character.characterMoney < findItem.itemPrice) {
         return res.status(201).json({ message: ` 골드가 부족합니다. 소지금 : ${req.character.characterMoney} ` });
     }
-    // 돈 계산 (선불)
+    // 돈 계산 (나름 선불)
     await prisma.character.update({
         data: {
             characterMoney: req.character.characterMoney - findItem.itemPrice,
@@ -119,7 +121,7 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
         data: {
             itemId: findItem.itemId,
             characterId: parseInt(character_id_auth),
-            inventoryNumber: inventorySlot === null ? 1 : inventorySlot.inventoryNumber + 1,
+            inventoryNumber: findTargetItem === null ? 1 : findTargetItem.inventoryNumber + 1,
             itemType: findItem.itemType,
         },
     });
@@ -128,6 +130,52 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
 });
 
 // 아이템 판매
-router.delete('/item/sell/:character_id_auth', loginAuth, CharacterAuth);
+router.delete('/item/sell/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
+    try {
+        const { character_id_auth } = req.params;
+        const { itemId } = req.body;
+
+        const findTarget = await prisma.inventory.findFirst({
+            where: {
+                itemId: parseInt(itemId),
+                characterId: parseInt(character_id_auth),
+            },
+            orderBy: {
+                inventoryNumber: 'asc',
+            },
+        });
+
+        const findItem = await prisma.items.findFirst({
+            where: {
+                itemId: parseInt(itemId),
+            },
+        });
+
+        if (!findTarget) {
+            throw new Error(' 보유하고 있지 않은 아이템 입니다. ');
+        }
+        // 아이템 제거
+        await prisma.inventory.delete({
+            where: {
+                inventoryId: findTarget.inventoryId,
+            },
+        });
+        // 판매 가격 (아이템 price의 0.6배)의 money를 획득
+        await prisma.character.update({
+            data: {
+                characterMoney: req.character.characterMoney + findItem.itemPrice * 0.6,
+            },
+            where: {
+                characterId: req.character.characterId,
+            },
+        });
+
+        return res.status(200).json({
+            message: ` 아이템을 ${findItem.itemPrice * 0.6}G에 판매했습니다. 소지금:${req.character.characterMoney}G `,
+        });
+    } catch (error) {
+        return res.status(400).json({ message: error.message });
+    }
+});
 
 export default router;
