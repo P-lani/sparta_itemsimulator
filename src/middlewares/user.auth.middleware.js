@@ -9,7 +9,6 @@ export default async function (req, res, next) {
         if (!authorization) {
             throw new Error('로그인 정보가 존재하지 않습니다.');
         }
-        console.log(authorization);
         //Bearer 와 토큰 구분
         const [tokenType, token] = authorization.split(' ');
 

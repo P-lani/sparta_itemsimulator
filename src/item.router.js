@@ -148,7 +148,6 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
         if (!findTargetItem) {
             nextMinNumber = 1;
         } else {
-            console.log(findTargetItem.characterId);
             const findMinNumber = await prisma.$queryRaw`
               SELECT min(inventory_number) FROM inventory 
               WHERE character_id =${findTargetItem.characterId} and inventory_number+1
