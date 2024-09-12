@@ -31,7 +31,7 @@ model Users {
 }
 
 // 아이템 테이블
-// itemType Int = 아이템 유형으로 활용됩니다. 
+// itemType Int = 아이템 유형으로 활용.
 // 9 기타 /10 무기/11 보조무기/12 갑옷/13 투구/ 14 장갑/15 신발/16 목걸이/17 벨트/18 반지
 model Items {
   itemId     Int     @id @default(autoincrement()) @map("item_id")
@@ -64,7 +64,7 @@ model Character {
 }
 
 // 인벤토리 테이블
-// inventoryNumber 는, 인벤토리의 몇번째 칸? 에 해당하는 방향으로 구현
+// inventoryNumber 는, 인벤토리의 몇 번째 칸? 에 해당하는 방향으로 구현
 model Inventory {
   inventoryId     Int     @id @default(autoincrement()) @map("inventory_id")
   inventoryNumber Int     @default(0) @map("inventory_number")

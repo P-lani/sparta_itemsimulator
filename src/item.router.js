@@ -228,7 +228,7 @@ router.delete('/item/sell/:character_id_auth', [loginAuth, CharacterAuth], async
         });
 
         // 판매 가격 (아이템 price의 0.6배)의 money를 획득
-        await prisma.character.update({
+        const sellItem = await prisma.character.update({
             data: {
                 characterMoney: req.character.characterMoney + findItem.itemPrice * 0.6,
             },
@@ -236,7 +236,7 @@ router.delete('/item/sell/:character_id_auth', [loginAuth, CharacterAuth], async
         });
 
         return res.status(200).json({
-            message: ` 아이템을 ${findItem.itemPrice * 0.6}G에 판매했습니다. 소지금:${req.character.characterMoney}G `,
+            message: ` 아이템을 ${findItem.itemPrice * 0.6}G에 판매했습니다. 소지금:${sellItem.characterMoney}G `,
         });
     } catch (error) {
         return res.status(400).json({ message: error.message });
