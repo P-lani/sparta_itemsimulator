@@ -102,8 +102,9 @@ router.get('/item/search/:item_id', async (req, res, next) => {
         select: {
             itemId: true,
             itemName: true,
-            itemPrice: true,
             itemInfo: true,
+            itemType: true,
+            itemPrice: true,
             itemStatus: true,
         },
     });
