@@ -17,6 +17,9 @@ router.get('/inventory/search/:character_id_auth', [loginAuth, CharacterAuth], a
             characterId: parseInt(character_id_auth),
             equippedItem: false,
         },
+        orderBy: {
+            inventoryNumber: 'asc',
+        },
         select: {
             inventoryId: false,
             inventoryNumber: true,
@@ -46,8 +49,7 @@ router.get('/inventory/search/:character_id_auth', [loginAuth, CharacterAuth], a
 
 // 인벤토리 아이템 장착 API
 // 장착할 캐릭터를 param 으로 , 장착할 아이템을 body 로 받는다.
-// 장비 아이템이 아닌걸 장착할수 없어야한다.
-// 트랜잭션을 구현할 필요가 있다.
+// 같은 itemType 의 아이템을 여러개 장착할 수 없어야한다.
 router.put('/inventory/equip/:character_id_auth', [loginAuth, CharacterAuth], async (req, res, next) => {
     try {
         const { character_id_auth } = req.params;
@@ -108,8 +110,10 @@ router.put('/inventory/equip/:character_id_auth', [loginAuth, CharacterAuth], as
         // 능력치 적용
         await prisma.character.update({
             data: {
-                characterAttack: req.character.characterAttack + findItem.itemAttack,
-                characterHealth: req.character.characterHealth + findItem.itemHealth,
+                characterAttack:
+                    req.character.characterAttack + (findItem.itemStatus.attack ? findItem.itemStatus.attack : 0),
+                characterHealth:
+                    req.character.characterHealth + (findItem.itemStatus.health ? findItem.itemStatus.health : 0),
             },
             where: {
                 characterId: parseInt(character_id_auth),
@@ -206,8 +210,10 @@ router.put('/inventory/un_equip/:character_id_auth', [loginAuth, CharacterAuth],
         // 능력치 감소
         await prisma.character.update({
             data: {
-                characterAttack: req.character.characterAttack - findItem.itemAttack,
-                characterHealth: req.character.characterHealth - findItem.itemHealth,
+                characterAttack:
+                    req.character.characterAttack - (findItem.itemStatus.attack ? findItem.itemStatus.attack : 0),
+                characterHealth:
+                    req.character.characterHealth - (findItem.itemStatus.health ? findItem.itemStatus.health : 0),
             },
             where: {
                 characterId: parseInt(character_id_auth),

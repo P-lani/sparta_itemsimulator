@@ -11,8 +11,7 @@ const createdSchema = joi.object({
     itemName: joi.string().min(1).max(12).required(),
     itemPrice: joi.number().min(0).max(999999),
     itemInfo: joi.string().min(1).max(16),
-    itemAttack: joi.number().min(0).max(9999),
-    itemHealth: joi.number().min(0).max(9999),
+    itemStatus: joi.any(),
     itemType: joi.number().min(9).max(18),
 });
 
@@ -21,7 +20,7 @@ const createdSchema = joi.object({
 router.post('/item/make', async (req, res, next) => {
     try {
         const signUpJoi = await createdSchema.validateAsync(req.body);
-        const { itemName, itemPrice, itemInfo, itemAttack, itemHealth, itemType } = signUpJoi;
+        const { itemName, itemPrice, itemInfo, itemStatus, itemType } = signUpJoi;
 
         const findItem = await prisma.items.findFirst({
             where: { itemName },
@@ -36,8 +35,7 @@ router.post('/item/make', async (req, res, next) => {
                 itemName,
                 itemPrice,
                 itemInfo,
-                itemAttack,
-                itemHealth,
+                itemStatus,
                 itemType,
             },
         });
@@ -54,7 +52,7 @@ router.put('/item/modify/:item_id', async (req, res, next) => {
     try {
         const signUpJoi = await createdSchema.validateAsync(req.body);
         const { item_id } = req.params;
-        const { itemName, itemAttack, itemHealth, itemInfo } = signUpJoi;
+        const { itemName, itemStatus, itemInfo } = signUpJoi;
 
         const findItemId = await prisma.items.findFirst({
             where: {
@@ -63,11 +61,11 @@ router.put('/item/modify/:item_id', async (req, res, next) => {
         });
 
         if (!findItemId) {
-            return res.status(400).json({ message: ' 존재하지 않는 아이템 아이디 입니다. ' });
+            return res.status(409).json({ message: ' 존재하지 않는 아이템 아이디 입니다. ' });
         }
 
         await prisma.items.update({
-            data: { itemName, itemAttack, itemHealth, itemInfo },
+            data: { itemName, itemStatus, itemInfo },
             where: {
                 itemId: parseInt(item_id),
             },
@@ -87,8 +85,7 @@ router.get('/item/search_all', async (req, res, next) => {
             itemId: true,
             itemName: true,
             itemPrice: true,
-            itemAttack: false,
-            itemHealth: false,
+            itemStatus: false,
             itemInfo: false,
         },
     });
@@ -107,13 +104,12 @@ router.get('/item/search/:item_id', async (req, res, next) => {
             itemName: true,
             itemPrice: true,
             itemInfo: true,
-            itemAttack: true,
-            itemHealth: true,
+            itemStatus: true,
         },
     });
 
     if (!itemLook) {
-        return res.status(400).json({ message: '존재하지 않는 아이템 아이디 입니다.' });
+        return res.status(404).json({ message: '존재하지 않는 아이템 아이디 입니다.' });
     }
 
     return res.status(200).json({ data: itemLook });
@@ -121,7 +117,7 @@ router.get('/item/search/:item_id', async (req, res, next) => {
 
 // 아이템 획득
 // 에서 변경된 아이템 구매
-router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
+router.post('/item/buy/:character_id_auth', [loginAuth, CharacterAuth], async (req, res, next) => {
     try {
         const { character_id_auth } = req.params;
         const { itemId } = req.body;
@@ -139,13 +135,16 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
             where: {
                 characterId: parseInt(character_id_auth),
             },
+            orderBy: {
+                inventoryNumber: 'asc',
+            },
         });
 
         // 해당 characterId 의 inventoryNumber 최소값 찾기
         // 해당 character가 보유한 아이템이 없을경우 1로 지정
         // 아이템을 보유중인 경우, 가장 작은 빈값을 찾음
         let nextMinNumber;
-        if (!findTargetItem) {
+        if (!findTargetItem || findTargetItem.inventoryNumber !== 1) {
             nextMinNumber = 1;
         } else {
             const findMinNumber = await prisma.$queryRaw`
@@ -186,24 +185,26 @@ router.post('/item/buy/:character_id_auth', loginAuth, CharacterAuth, async (req
             },
         });
 
-        return res.status(201).json({ message: ` ${findItem.itemName}을 구매했습니다. ` });
+        return res.status(201).json({ message: ` ${findItem.itemName}  구매했습니다. ` });
     } catch (error) {
         return res.status(400).json({ message: error.message });
     }
 });
 
 // 아이템 판매
-router.delete('/item/sell/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
+router.delete('/item/sell/:character_id_auth', [loginAuth, CharacterAuth], async (req, res, next) => {
     try {
         const { character_id_auth } = req.params;
         const { itemId } = req.body;
 
         // 인벤토리에서 해당 아이템 조회
         // 동일한 아이템이 있을경우 가장 낮은 number의 아이템을 임의로 지정
+        // 장착되지 않은 아이템만 조회
         const findTarget = await prisma.inventory.findFirst({
             where: {
                 itemId: parseInt(itemId),
                 characterId: parseInt(character_id_auth),
+                equippedItem: false,
             },
             orderBy: {
                 inventoryNumber: 'asc',

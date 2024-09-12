@@ -109,7 +109,7 @@ router.get('/character/search_all', async (req, res, next) => {
 
 // 캐릭터 삭제 API
 // JWT 인증 필요 + 캐릭터 인증 필요
-router.delete('/character/delete/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
+router.delete('/character/delete/:character_id_auth', [loginAuth, CharacterAuth], async (req, res, next) => {
     const { character_id_auth } = req.params;
 
     //미들웨어로 검증을 다 했기 때문에 바로 조회하여 삭제
@@ -121,7 +121,7 @@ router.delete('/character/delete/:character_id_auth', loginAuth, CharacterAuth, 
 });
 
 // Show me the money
-router.put('/show_me_the_money/:character_id_auth', loginAuth, CharacterAuth, async (req, res, next) => {
+router.put('/show_me_the_money/:character_id_auth', [loginAuth, CharacterAuth], async (req, res, next) => {
     const { character_id_auth } = req.params;
 
     const moneyGet = await prisma.character.update({

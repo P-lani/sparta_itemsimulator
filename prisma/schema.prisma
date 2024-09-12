@@ -15,7 +15,7 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 계정
+// 계정 테이블
 model Users {
   userId    Int      @id @default(autoincrement()) @map("user_id")
   userName  String   @unique @map("user_name")
@@ -30,25 +30,14 @@ model Users {
   @@map("users")
 }
 
-// 아이템
-// [itemType]
-// 9. 기타
-// 10. 무기
-// 11. 보조무기
-// 12. 갑옷
-// 13. 투구
-// 14. 장갑
-// 15. 신발
-// 16. 목걸이
-// 17. 벨트
-// 18. 반지.....두개...가능......
-
+// 아이템 테이블
+// itemType Int = 아이템 유형으로 활용됩니다. 
+// 9 기타 /10 무기/11 보조무기/12 갑옷/13 투구/ 14 장갑/15 신발/16 목걸이/17 벨트/18 반지
 model Items {
   itemId     Int     @id @default(autoincrement()) @map("item_id")
   itemName   String  @map("item_name")
   itemPrice  Int     @default(0) @map("item_price")
-  itemAttack Int     @default(0) @map("item_attack")
-  itemHealth Int     @default(0) @map("item_health")
+  itemStatus Json?   @map("item_status")
   itemInfo   String? @default("생성된_아이템") @map("item_info")
   itemType   Int     @map("item_type")
 
@@ -57,19 +46,14 @@ model Items {
   @@map("items")
 }
 
-// 아이템 기본 DB 는 안만듦
-// 아이템의 '원본'이 저장된 데이터베이스
-// 실제 유저들이 사용하는 item과 분리되어야함
-// 을 만들어야 하는게 맞는지 생각중
-
-// 캐릭터
+// 캐릭터 테이블
 model Character {
   characterId            Int    @id @default(autoincrement()) @map("Character_id")
   characterName          String @unique @map("character_name")
   characterMoney         Int    @default(10000) @map("character_money")
   characterHealth        Int    @default(500) @map("character_health")
   characterAttack        Int    @default(100) @map("character_attack")
-  characterInventorySize Int    @default(5) @map("character_inventory_size")
+  characterInventorySize Int    @default(10) @map("character_inventory_size")
 
   userId Int   @map("user_id")
   user   Users @relation(fields: [userId], references: [userId], onDelete: Cascade)
@@ -79,9 +63,8 @@ model Character {
   @@map("character")
 }
 
-// 인벤토리 100트
-// 인벤토리 슬롯 개념이 생긴다면 난이도가...
-// 수량이 생기면 더 더욱 난이도가...
+// 인벤토리 테이블
+// inventoryNumber 는, 인벤토리의 몇번째 칸? 에 해당하는 방향으로 구현
 model Inventory {
   inventoryId     Int     @id @default(autoincrement()) @map("inventory_id")
   inventoryNumber Int     @default(0) @map("inventory_number")
